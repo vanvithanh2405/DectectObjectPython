@@ -5,7 +5,8 @@ import numpy as np
 # Create tracker object
 tracker = EuclideanDistTracker()
 
-cap = cv2.VideoCapture('nap-chai.mp4')
+cap = cv2.VideoCapture('nap-chai-3.mp4')
+
 
 # Object dectection from stable camera
 while True:
@@ -19,19 +20,62 @@ while True:
     blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
     blue = cv2.bitwise_and(roi, roi, mask=blue_mask)
 
+    # Red
+    low_red = np.array([161, 155, 84])
+    high_red = np.array([179, 255, 255])
+    red_mask = cv2.inRange(hsv_frame, low_red, high_red)
+    red = cv2.bitwise_and(roi, roi, mask=red_mask)
+
+    # Green
+    low_green = np.array([25, 52, 72])
+    high_green = np.array([102, 255, 255])
+    green_mask = cv2.inRange(hsv_frame, low_green, high_green)
+    green = cv2.bitwise_and(roi, roi, mask=green_mask)
+
+    # 3 Color detection
+    # colorDetection = cv2.inRange(blue_mask, red_mask, green_mask)
     # Extract Region of interest
     detections = []
     # Object Detection
-    contours, _ = cv2.findContours(
+    contoursGreen, _ = cv2.findContours(
+        green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    contoursBlue, _ = cv2.findContours(
         blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for cnt in contours:
+
+    contoursRed, _ = cv2.findContours(
+        red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for cnt in contoursGreen:
         # Calculate area and remove small element
         area = cv2.contourArea(cnt)
         if area > 850:
             # cv2.drawContours(roi, [cnt],-1,(0,255,0),2)
             x, y, w, h = cv2.boundingRect(cnt)
             detections.append([x, y, w, h])
+            a = 2
+            print(a)
 
+    for cnt in contoursBlue:
+        # Calculate area and remove small element
+        area = cv2.contourArea(cnt)
+        if area > 850:
+            # cv2.drawContours(roi, [cnt],-1,(0,255,0),2)
+            x, y, w, h = cv2.boundingRect(cnt)
+            detections.append([x, y, w, h])
+            a = 1
+            print(a)
+
+    for cnt in contoursRed:
+        # Calculate area and remove small element
+        area = cv2.contourArea(cnt)
+        if area > 850:
+            # cv2.drawContours(roi, [cnt],-1,(0,255,0),2)
+            x, y, w, h = cv2.boundingRect(cnt)
+            detections.append([x, y, w, h])
+            a = 3
+            print(a)
+    
     # 2. Object Tracking
     boxes_ids = tracker.update(detections)
     for box_id in boxes_ids:
@@ -42,7 +86,6 @@ while True:
 
     cv2.imshow("roi", roi)
     cv2.imshow("Frame", frame)
-    cv2.imshow('blue', blue)
     key = cv2.waitKey(30)
     if key == 27:
         break
